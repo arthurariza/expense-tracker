@@ -33,6 +33,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  ruby
 
 DEPENDENCIES
   coderay (= 1.1.1)
