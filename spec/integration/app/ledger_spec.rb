@@ -1,9 +1,8 @@
 require_relative '../../../app/ledger'
 require_relative '../../../config/sequel'
-require_relative '../../support/db'
 
 module ExpenseTracker
-  RSpec.describe Ledger do
+  RSpec.describe Ledger, :db do
     let(:ledger) { Ledger.new }
     let(:expense) do
       {
@@ -24,6 +23,19 @@ module ExpenseTracker
             amount: 5.75,
             date: Date.iso8601('2017-06-10')
           )]
+        end
+      end
+      context 'when the expense lacks a payee' do
+        it 'rejects the expense as invalid' do
+          expense.delete('payee')
+
+          result = ledger.record(expense)
+
+          expect(result).not_to be_success
+          expect(result.expense_id).to eq(nil)
+          expect(result.error_message).to include('`payee` is required')
+
+          expect(DB[:expenses].count).to eq(0)
         end
       end
     end
