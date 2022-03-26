@@ -60,15 +60,28 @@ module ExpenseTracker
       end
     end
 
-    RSpec.describe 'GET /expenses/:date' do
+    describe 'GET /expenses/:date' do
+      let(:today) { Date.today }
+      let(:tomorrow) { Date.today.next_day(1) }
+
       context 'when expenses exists on the given date' do
         it 'returns the expense records as JSON'
         it 'responds with a 200 (OK)'
       end
 
       context 'when there are no expenses on the given date' do
-        it 'returns an empty array as JSON'
-        it 'responds with a 200 (OK)'
+        it 'returns an empty array as JSON' do
+          get "/expenses/#{today}"
+
+          parsed = parse_body
+
+          expect(parsed).to eq([])
+        end
+        it 'responds with a 200 (OK)' do
+          get "/expenses/#{today}"
+
+          expect(last_response.status).to eq(200)
+        end
       end
     end
   end
