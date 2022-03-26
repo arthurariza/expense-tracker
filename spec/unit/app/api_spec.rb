@@ -9,7 +9,7 @@ module ExpenseTracker
       API.new(ledger: ledger)
     end
 
-    def parse_body
+    def parse_response_body
       JSON.parse(last_response.body)
     end
 
@@ -28,7 +28,7 @@ module ExpenseTracker
         it 'returns the expense id' do
           post '/expenses', JSON.generate(expense)
 
-          parsed = parse_body
+          parsed = parse_response_body
           expect(parsed).to include('expense_id' => 417)
         end
         it 'responds with a 200' do
@@ -50,7 +50,7 @@ module ExpenseTracker
         it 'returns an error message' do
           post '/expenses', JSON.generate(expense)
 
-          parsed = parse_body
+          parsed = parse_response_body
           expect(parsed).to include('error' => 'Expense incomplete')
         end
         it 'responds with a 422' do
@@ -62,18 +62,40 @@ module ExpenseTracker
 
     describe 'GET /expenses/:date' do
       let(:today) { Date.today }
-      let(:tomorrow) { Date.today.next_day(1) }
 
       context 'when expenses exists on the given date' do
-        it 'returns the expense records as JSON'
-        it 'responds with a 200 (OK)'
+        before do
+          allow(ledger).to receive(:expenses_on)
+            .with(today.to_s)
+            .and_return(%w[expense_1 expense_2])
+        end
+
+        it 'returns the expense records as JSON' do
+          get "/expenses/#{today}"
+
+          parsed = parse_response_body
+
+          expect(parsed).to eq(%w[expense_1 expense_2])
+        end
+
+        it 'responds with a 200 (OK)' do
+          get "/expenses/#{today}"
+
+          expect(last_response.status).to eq(200)
+        end
       end
 
       context 'when there are no expenses on the given date' do
+        before do
+          allow(ledger).to receive(:expenses_on)
+            .with(today.to_s)
+            .and_return([])
+        end
+
         it 'returns an empty array as JSON' do
           get "/expenses/#{today}"
 
-          parsed = parse_body
+          parsed = parse_response_body
 
           expect(parsed).to eq([])
         end
